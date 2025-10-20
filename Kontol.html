@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Final Hasil Kurasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://kemendikdasmen.go.id/web/image/website/21/favicon?unique=c3563e4">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Menambahkan library SheetJS untuk ekspor ke Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --neu-bg: #e0e5ec;
+            --neu-light: #ffffff;
+            --neu-dark: #a3b1c6;
+            --neu-primary: #4f46e5;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--neu-bg);
+        }
+
+        /* Gaya Neumorphism Umum */
+        .neumorphism-card {
+            background: var(--neu-bg);
+            border-radius: 20px;
+            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.5);
+            animation: fadeInScale 0.5s ease-out forwards;
+        }
+
+        .neumorphism-input, .neumorphism-textarea, .neumorphism-select {
+            width: 100%; padding: 1rem; border: none; outline: none; border-radius: 12px;
+            background: var(--neu-bg); color: #555; font-size: 1rem;
+            box-shadow: inset 5px 5px 10px #cbced1, inset -5px -5px 10px #ffffff;
+            transition: box-shadow 0.3s ease;
+        }
+        .neumorphism-input::placeholder, .neumorphism-textarea::placeholder { color: #999; }
+        .neumorphism-input:focus, .neumorphism-textarea:focus, .neumorphism-select:focus { box-shadow: inset 7px 7px 12px #cbced1, inset -7px -7px 12px #ffffff; }
+
+        .neumorphism-button {
+            width: 100%; padding: 1rem; border: none; outline: none; border-radius: 12px;
+            background-color: var(--neu-bg); color: var(--neu-primary);
+            font-weight: bold; font-size: 1rem; cursor: pointer;
+            box-shadow: 6px 6px 12px #b8bcc2, -6px -6px 12px #ffffff;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .neumorphism-button:hover { box-shadow: 4px 4px 10px #b8bcc2, -4px -4px 10px #ffffff; color: #3c34d0; }
+        .neumorphism-button:active, .neumorphism-button:disabled {
+            box-shadow: inset 4px 4px 8px #b8bcc2, inset -4px -4px 8px #ffffff;
+            color: #6a63f1;
+        }
+        
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .form-label { @apply block text-sm font-medium text-slate-700; }
+
+        /* Gaya Neumorphism Tabel */
+        .neumorphism-table-container {
+            background: var(--neu-bg);
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.5);
+            overflow: auto;
+            max-height: 80vh;
+        }
+        .neumorphism-table {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        .neumorphism-table thead th {
+            position: sticky; top: -1rem; /* Adjust based on padding */
+            z-index: 10;
+            background-color: var(--neu-bg);
+            padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #555;
+            white-space: nowrap; box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+            border-radius: 8px; margin: 5px;
+        }
+        .neumorphism-table tbody tr {
+             box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+             border-radius: 10px;
+        }
+        .neumorphism-table tbody td {
+            background: var(--neu-bg); padding: 1rem 1.5rem; vertical-align: top;
+        }
+        .neumorphism-table tbody td:first-child { border-radius: 10px 0 0 10px; }
+        .neumorphism-table tbody td:last-child { border-radius: 0 10px 10px 0; }
+        
+        .content-cell { min-width: 300px; white-space: normal; word-break: break-word; }
+        .suggestion-cell { min-width: 350px; white-space: normal; }
+        .indicator-cell { min-width: 250px; white-space: normal; } /* BARU: Untuk wrap text */
+
+        .neumorphism-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em 1.5em;
+        }
+        .document-icon {
+            color: var(--neu-primary);
+            font-size: 1.75rem;
+            transition: color 0.3s;
+        }
+        .document-icon:hover {
+            color: #3c34d0;
+        }
+
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- === HEADER === -->
+    <header id="main-header" class="bg-white/80 backdrop-blur-lg shadow-sm z-30 border-b border-slate-200 sticky top-0">
+        <div class="max-w-[95%] mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-slate-800">Laporan Final Kurasi</h1>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Tombol Home -->
+                <a href="./" class="hidden sm:flex bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg text-sm transition-all duration-200 items-center">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- === MAIN CONTENT === -->
+    <main class="bg-slate-50">
+        <div class="py-10">
+            <div class="max-w-[95%] mx-auto sm:px-6 lg:px-8">
+                
+                <!-- Tabel Laporan Final -->
+                <div id="report-section">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 px-4 sm:px-0">
+                        <h2 class="text-2xl font-semibold text-slate-800 mb-4 sm:mb-0">Laporan Final Hasil Kurasi Konten</h2>
+                        <button id="export-report-btn" class="neumorphism-button !w-auto py-2 px-4 text-sm">
+                            <i class="fas fa-file-excel mr-2"></i> Export Rincian ke Excel
+                        </button>
+                    </div>
+
+                    <!-- === FILTER SECTION === -->
+                    <div id="report-filter-section" class="neumorphism-card p-4 md:p-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label for="filter-content-name" class="form-label mb-2 ml-1">Nama Konten</label>
+                                <select id="filter-content-name" class="neumorphism-select text-sm"></select>
+                            </div>
+                            <div>
+                                <label for="filter-curator-name" class="form-label mb-2 ml-1">Nama Kurator</label>
+                                <select id="filter-curator-name" class="neumorphism-select text-sm"></select>
+                            </div>
+                             <div>
+                                <label for="filter-final-result" class="form-label mb-2 ml-1">Hasil Keputusan (D2)</label>
+                                <select id="filter-final-result" class="neumorphism-select text-sm"></select>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="reset-filter-btn" class="neumorphism-button !w-full !py-3 !text-sm" style="color: #555;">
+                                    <i class="fas fa-undo mr-2"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="table-wrapper" class="neumorphism-table-container">
+                        <p id="filter-no-results" class="hidden text-center p-8 text-slate-500 font-semibold">
+                            Tidak ada hasil yang cocok dengan filter Anda.
+                        </p>
+                        <table id="report-table" class="w-full neumorphism-table">
+                            <!-- Konten tabel akan disuntikkan oleh JavaScript -->
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+		const firebaseConfig = {
+		  apiKey: "AIzaSyB0biVlYEZg7p5UntYRDnyjdQCfe15_vmk",
+		  authDomain: "kurasidirsd.firebaseapp.com",
+		  projectId: "kurasidirsd",
+		  storageBucket: "kurasidirsd.firebasestorage.app",
+		  messagingSenderId: "168494524685",
+		  appId: "1:168494524685:web:b209da5c5fec9e7d5be844"
+		};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- UI Elements ---
+        const reportTable = document.getElementById('report-table');
+        const filterContentName = document.getElementById('filter-content-name');
+        const filterCuratorName = document.getElementById('filter-curator-name');
+        const filterFinalResult = document.getElementById('filter-final-result');
+        const resetFilterBtn = document.getElementById('reset-filter-btn');
+        const noResultsMessage = document.getElementById('filter-no-results');
+        const exportReportBtn = document.getElementById('export-report-btn');
+
+        // --- Data Maps ---
+        let allCurationData = []; // Flat array to hold all data rows for easier filtering and rendering
+
+        // --- Struktur Pertanyaan Lengkap ---
+        const curationQuestions = [
+             { id: 'A1', title: 'A.1 Keamanan Materi', items: [ { id: 'radikalisme', text: 'Materi bebas dari unsur radikalisme, ekstremisme, dan terorisme' }, { id: 'pornografi', text: 'Materi bebas dari pornografi atau ketelanjangan yang tidak sesuai konteks' }, { id: 'diskriminasi', text: 'Materi bebas dari unsur perundungan atau diskriminasi' }, { id: 'promosi', text: 'Materi bebas dari promosi produk komersial' }, { id: 'sara', text: 'Materi bebas dari unsur SARA' }, { id: 'kekerasan', text: 'Materi bebas dari unsur kekerasan atau isu politik kontroversial' }, { id: 'komersial', text: 'Materi bebas dari unsur komersial (logo/identitas bisa diburamkan)' } ]},
+             { id: 'A2', title: 'A.2 Copyright', items: [ { id: 'sumber', text: 'Mencantumkan sumber/referensi/credit' }, { id: 'ai', text: 'Jika dibuat oleh AI perlu dituliskan keterangan' } ]},
+             { id: 'A3', title: 'A.3 Substansi Materi', items: [ { id: 'konsumsi', text: 'Materi dapat dikonsumsi langsung oleh murid' }, { id: 'mapel', text: 'Materi mendukung mata pelajaran secara spesifik' }, { id: 'kurikulum', text: 'Materi relevan dengan kurikulum yang berlaku' }, { id: 'akurat', text: 'Isi materi (visual, audio, dll) berisi informasi akurat' }, { id: 'sistematis', text: 'Materi disusun sistematis sesuai perkembangan kompetensi' }, { id: 'kesulitan', text: 'Tingkat kesulitan materi sesuai jenjang pendidikan' }, { id: 'asesmen', text: 'Materi memuat asesmen yang sesuai (bisa berupa pertanyaan reflektif)' }, ]},
+             { id: 'A4', title: 'A.4 Kebahasaan', items: [ { id: 'sopan', text: 'Menggunakan bahasa yang sopan, baik, dan benar' }, { id: 'struktur', text: 'Struktur kalimat disesuaikan dengan tingkat pemahaman pengguna' }, ]},
+             { id: 'A5', title: 'A.5 Inklusivitas', items: [ { id: 'bias', text: 'Materi bebas dari bias gender, sosial, ekonomi, dan budaya' }, { id: 'prinsip', text: 'Materi tidak bertentangan dengan prinsip inklusivitas' }, { id: 'akses', text: 'Materi dapat diakses oleh murid dengan berbagai kebutuhan' }, { id: 'ilustrasi', text: 'Ilustrasi mencerminkan keberagaman murid' }, ]},
+             { id: 'B1', title: 'B.1 Teks', items: [ { id: 'teks_kontras', text: 'Teks memiliki kontras yang tinggi dengan latar belakang' }, { id: 'teks_ilustrasi', text: 'Ilustrasi mendukung isi materi dengan teks sebagai elemen utama' }, { id: 'teks_resolusi', text: 'Ilustrasi memiliki resolusi yang baik' } ]},
+             { id: 'B2', title: 'B.2 Gambar', items: [ { id: 'gambar_elemen_utama', text: 'Gambar sebagai elemen utama untuk mendukung pemahaman' }, { id: 'gambar_teks_pendukung', text: 'Teks berfungsi untuk mendukung isi materi' }, { id: 'gambar_kualitas', text: 'Gambar memiliki kualitas yang baik' }, { id: 'gambar_mudah_dipahami', text: 'Gambar mudah dipahami dan tidak multitafsir' }, { id: 'gambar_warna', text: 'Penggunaan warna penuh/hitam putih/gradasi sesuai' }, { id: 'gambar_kontras', text: 'Kontras warna tinggi dan latar belakang tidak mengganggu' } ]},
+             { id: 'B3', title: 'B.3 Video', items: [ { id: 'video_musik', text: 'Musik latar (backsound) tidak mengganggu suara utama' }, { id: 'video_suara', text: 'Suara narator atau presenter jelas' }, { id: 'video_tulisan', text: 'Tulisan pada video terbaca dengan baik' }, { id: 'video_takarir', text: 'Takarir (jika ada) jelas dan sinkron' }, { id: 'video_visual', text: 'Visual terang, jelas, dan fokus' }, { id: 'video_skala', text: 'Video menggunakan skala 16:9' }, { id: 'video_resolusi', text: 'Resolusi minimum 720p' }, { id: 'video_kontras', text: 'Kontras warna tinggi dan latar belakang tidak ramai' }, { id: 'video_durasi', text: 'Durasi Video tidak terlalu panjang/pendek' } ]},
+             { id: 'B4', title: 'B.4 Interaktif', items: [ { id: 'interaktif_relevansi', text: 'Konten interaktif relevan dengan materi' }, { id: 'interaktif_aktivitas', text: 'Aktivitas interaktif minimal (memilih, mencocokkan, dll)' }, { id: 'interaktif_navigasi', text: 'Materi mudah dinavigasi secara mandiri' }, { id: 'interaktif_visual', text: 'Visual jelas dan latar belakang tidak mengganggu' }, { id: 'interaktif_kontras', text: 'Kontras jelas antara teks, ikon, dan latar belakang' }, { id: 'interaktif_tombol', text: 'Tombol dan elemen interaktif ukurannya sesuai' }, { id: 'interaktif_ikon', text: 'Ikon dan warna konsisten' }, { id: 'interaktif_umpan_balik', text: 'Umpan balik langsung, jelas, dan mudah dipahami' }, { id: 'interaktif_ilustrasi', text: 'Ilustrasi relevan dan menarik minat murid' }, { id: 'interaktif_min_aktivitas', text: 'Memiliki minimal 3 aktivitas interaktif' } ]},
+             { id: 'B5', title: 'B.5 Lab Maya', items: [ { id: 'lab_simulasi', text: 'Simulasi bersifat interaktif dua arah' }, { id: 'lab_umpan_balik_interaktif', text: 'Umpan balik interaktif ditampilkan secara langsung' }, { id: 'lab_navigasi', text: 'Navigasi intuitif dan memudahkan pengguna' }, { id: 'lab_desain', text: 'Desain antarmuka bersih dan terstruktur' }, { id: 'lab_umpan_balik_langsung', text: 'Umpan balik langsung, jelas, dan mudah dipahami' }, { id: 'lab_warna', text: 'Warna dan elemen visual selaras' }, { id: 'lab_tombol', text: 'Tombol, alat, dan indikator mudah dikenali' }, { id: 'lab_interaksi_dinamis', text: 'Interaksi dinamis dan drag-drop yang logis' }, { id: 'lab_pertanyaan_lanjutan', text: 'Pertanyaan lanjutan berbasis konteks' }, { id: 'lab_akses_kembali', text: 'Setiap tahapan dapat diakses kembali' }, { id: 'lab_indikator_progres', text: 'Tersedia indikator progres atau panduan langkah' } ]},
+             { id: 'B6', title: 'B.6 Gim Edukasi', items: [ { id: 'gim_navigasi', text: 'Navigasi permainan bersifat intuitif' }, { id: 'gim_aktivitas', text: 'Memuat aktivitas interaktif (drag-drop, fill-in-the-blank, dll)' }, { id: 'gim_respons', text: 'Setiap interaksi memberikan respons/umpan balik' }, { id: 'gim_elemen_visual', text: 'Elemen visual jelas, konsisten, dan kontras memadai' }, { id: 'gim_teks', text: 'Teks mudah dibaca dengan ukuran proporsional' }, { id: 'gim_animasi', text: 'Animasi dan efek visual digunakan secara proporsional' }, { id: 'gim_alur', text: 'Tersedia alur penyelesaian misi (pathway) yang jelas' }, { id: 'gim_indikator_progres', text: 'Tersedia indikator progres yang jelas' }, { id: 'gim_hasil_akhir', text: 'Hasil akhir dan skor ditampilkan secara informatif' }, { id: 'gim_efek_suara', text: 'Efek suara dan animasi memperkuat pengalaman interaktif' }, { id: 'gim_min_aktivitas', text: 'Memiliki minimal 3 aktivitas interaktif' } ]},
+             { id: 'C1', title: 'C.1 Judul', items: [ { id: 'judul_topik', text: 'Judul menggambarkan topik bahasan' }, { id: 'judul_kata_kunci', text: 'Memuat 1 - 3 kata kunci penting' }, { id: 'judul_kapitalisasi', text: 'Kapitalisasi judul sesuai kaidah tata bahasa' }, { id: 'judul_istilah', text: 'Istilah selaras dengan buku teks/kurikulum' }, { id: 'judul_ringkas', text: 'Ringkas, maksimal 55 karakter' } ]},
+             { id: 'C2', title: 'C.2 Isi Materi', items: [ { id: 'isi_langsung_digunakan', text: 'Berisi materi belajar yang bisa langsung digunakan murid' }, { id: 'isi_tanpa_info_kelas', text: 'Tidak ada informasi kelas dalam isi materi' } ]},
+             { id: 'C3', title: 'C.3 Deskripsi', items: [ { id: 'deskripsi_tujuan', text: 'Memuat tujuan belajar dan manfaat bagi murid' }, { id: 'deskripsi_bahasa', text: 'Bahasa baik, benar, dan mudah dipahami murid' }, { id: 'deskripsi_ringkas', text: 'Ringkas dan padat, 400-800 karakter' }, { id: 'deskripsi_tanpa_info_kelas', text: 'Tidak ada informasi kelas dalam deskripsi' }, { id: 'deskripsi_persuasif', text: 'Deskripsi persuasif dengan kata sapaan (adik-adik, kamu)' } ]},
+             { id: 'C4', title: 'C.4 Penulis', items: [ { id: 'penulis_nama', text: 'Nama penulis lengkap tanpa gelar' }, { id: 'penulis_kolaborasi', text: 'Jika kolaborasi, cantumkan satu nama utama' }, { id: 'penulis_instansi', text: 'Jika dari instansi, nama penulis bisa nama instansi' } ]},
+             { id: 'C5', title: 'C.5 Prinsip Keselarasan', items: [ { id: 'keselarasan_prinsip', text: 'Keselarasan antara tujuan, langkah, dan asesmen pembelajaran' } ]}
+        ];
+        const resultCategories = [ "Lulus Kurasi", "Kurang Sesuai", "Perbaikan Minor", "Perbaikan Mayor", "Tidak Lulus Kurasi" ];
+        
+        // --- Fungsi Utama untuk Menyiapkan dan Menampilkan Laporan ---
+        async function setupAndDisplayReport() {
+            reportTable.innerHTML = `<tbody><tr><td colspan="21" class="text-center p-8 text-slate-500">Memuat data laporan... <i class="fas fa-spinner fa-spin"></i></td></tr></tbody>`;
+            try {
+                // 1. Fetch all necessary data at once for efficiency
+                const [usersSnap, contentsSnap, assignmentsSnap, curationsSnap] = await Promise.all([
+                    getDocs(collection(db, "users")),
+                    getDocs(collection(db, "contents")),
+                    getDocs(collection(db, "assignments")),
+                    getDocs(collection(db, "curations"))
+                ]);
+                
+                // 2. Process data into maps for quick lookups
+                const usersMap = new Map(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+                const contentsMap = new Map(contentsSnap.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() }]));
+                const usernameToIdMap = new Map(usersSnap.docs.map(doc => [doc.data().username, doc.id]));
+                const curationsMap = new Map(curationsSnap.docs.map(doc => [doc.id, doc.data()]));
+
+                const assignmentsByContent = new Map();
+                assignmentsSnap.docs.forEach(assignDoc => {
+                    const { contentIds } = assignDoc.data();
+                    const userId = usernameToIdMap.get(assignDoc.id);
+                    if (userId && contentIds) {
+                        contentIds.forEach(contentId => {
+                            if (!assignmentsByContent.has(contentId)) assignmentsByContent.set(contentId, []);
+                            assignmentsByContent.get(contentId).push(userId);
+                        });
+                    }
+                });
+
+                // 3. Create a flat data structure for easier rendering and filtering
+                allCurationData = [];
+                curationsMap.forEach((curation, curationId) => {
+                    if (curation.answers) {
+                        const content = contentsMap.get(curation.contentId);
+                        const curator = usersMap.get(curation.userId);
+
+                        if (content && curator) {
+                            allCurationData.push({
+                                contentId: content.id,
+                                contentTitle: content.title,
+                                contentUrl: content.url,
+                                curatorId: curation.userId,
+                                curatorName: curator.nama,
+                                supervisorSuggestion: content.supervisorSuggestion,
+                                answers: curation.answers
+                            });
+                        }
+                    }
+                });
+
+                // 4. Render table and populate filters
+                renderReportTable(allCurationData);
+                populateFilters(allCurationData);
+            } catch (error) {
+                console.error("Gagal menampilkan laporan:", error);
+                reportTable.innerHTML = `<tbody><tr><td colspan="22" class="text-center p-8 text-red-500">Gagal memuat data: ${error.message}</td></tr></tbody>`;
+            }
+        }
+
+        // --- Fungsi untuk Merender Tabel ---
+        function renderReportTable(dataToRender) {
+            let tableHTML = `<thead><tr>
+                                <th>No.</th>
+                                <th>Nama Konten</th>
+                                <th>Kurator</th>
+                                <th>Hasil D2</th>`;
+            curationQuestions.forEach(q => {
+                tableHTML += `<th class="text-center">${q.title}</th>`;
+            });
+            tableHTML += `<th>Dokumen</th>
+                          <th>Kelebihan, Kekurangan & Saran (D1)</th>
+                          <th>Pesan & Saran Supervisor</th>
+                        </tr></thead><tbody>`;
+
+            if (dataToRender.length === 0) {
+                tableHTML += `<tr><td colspan="22" class="text-center p-8 text-slate-500">Tidak ada data yang cocok dengan filter.</td></tr>`;
+            } else {
+                dataToRender.forEach((data, index) => {
+                    const answers = data.answers;
+                    const finalDecision = answers.D2_Keputusan_Final?.keputusan || 'N/A';
+                    const docUrl = answers.D2_Keputusan_Final?.photoUrl;
+                    const docLinkHTML = docUrl ? `<a href="${docUrl}" target="_blank" rel="noopener noreferrer" title="Lihat Dokumen"><i class="fas fa-file-alt document-icon"></i></a>` : '—';
+                    const supervisorNote = data.supervisorSuggestion?.message ? `<p>${data.supervisorSuggestion.message}</p><small class="text-slate-500">Oleh: ${data.supervisorSuggestion.supervisorName}</small>` : '—';
+                    
+                    // Gabungkan catatan D1
+                    const d1_notes = answers.D1_Simpulan_Umum;
+                    const d1_html = d1_notes ? `
+                        <div class="text-xs">
+                          <p><strong>Kelebihan:</strong> ${d1_notes.kelebihan || ' - '}</p>
+                          <p class="mt-1"><strong>Kekurangan:</strong> ${d1_notes.kekurangan || ' - '}</p>
+                          <p class="mt-1"><strong>Saran:</strong> ${d1_notes.saran || ' - '}</p>
+                        </div>
+                    ` : '—';
+
+                    tableHTML += `<tr data-content-id="${data.contentId}" data-curator-name="${data.curatorName}" data-result-d2="${finalDecision}">
+                                    <td class="font-semibold text-slate-600">${index + 1}.</td>
+                                    <td class="content-cell">
+                                        <a href="${data.contentUrl}" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 hover:underline">${data.contentTitle}</a>
+                                    </td>
+                                    <td style="white-space:nowrap;">${data.curatorName}</td>
+                                    <td class="font-bold text-center">${finalDecision}</td>`;
+                    
+                    curationQuestions.forEach(q => {
+                        const answerGroup = answers[q.id];
+                        const value = answerGroup?.value || 'N/A';
+                        
+                        let notesHTML = '';
+                        const notesExist = q.items && q.items.some(item => answerGroup?.items?.[item.id]?.notes);
+
+                        if (notesExist) {
+                            notesHTML += '<ul class="text-xs list-disc pl-4 mt-1 text-left">';
+                            q.items.forEach(item => {
+                                const note = answerGroup?.items?.[item.id]?.notes;
+                                if (note) {
+                                    notesHTML += `<li><strong>${item.text}:</strong> ${note}</li>`;
+                                }
+                            });
+                            notesHTML += '</ul>';
+                        }
+                        
+                        tableHTML += `<td class="indicator-cell text-center">
+                                        <strong>${value}</strong>
+                                        ${notesHTML}
+                                      </td>`;
+                    });
+
+                    tableHTML += `<td class="text-center">${docLinkHTML}</td>
+                                  <td class="suggestion-cell">${d1_html}</td>
+                                  <td class="suggestion-cell">${supervisorNote}</td>
+                                </tr>`;
+                });
+            }
+            
+            tableHTML += '</tbody>';
+            reportTable.innerHTML = tableHTML;
+        }
+
+        // --- Fungsi Filter ---
+        function populateFilters(data) {
+            const contentNames = [...new Set(data.map(item => item.contentTitle))].sort();
+            const curatorNames = [...new Set(data.map(item => item.curatorName))].sort();
+
+            let contentOptions = '<option value="">Semua Konten</option>';
+            contentNames.forEach(name => {
+                contentOptions += `<option value="${name}">${name}</option>`;
+            });
+            filterContentName.innerHTML = contentOptions;
+
+            let curatorOptions = '<option value="">Semua Kurator</option>';
+            curatorNames.forEach(name => {
+                curatorOptions += `<option value="${name}">${name}</option>`;
+            });
+            filterCuratorName.innerHTML = curatorOptions;
+
+            let resultOptions = '<option value="">Semua Hasil</option>';
+            resultCategories.forEach(cat => {
+                 resultOptions += `<option value="${cat}">${cat}</option>`;
+            });
+            filterFinalResult.innerHTML = resultOptions;
+        }
+
+        function applyFilters() {
+            const selectedContent = filterContentName.options[filterContentName.selectedIndex].text;
+            const selectedCurator = filterCuratorName.value;
+            const selectedResult = filterFinalResult.value;
+
+            const filteredData = allCurationData.filter(item => {
+                const contentMatch = (selectedContent === 'Semua Konten') || (item.contentTitle === selectedContent);
+                const curatorMatch = !selectedCurator || item.curatorName === selectedCurator;
+                const resultMatch = !selectedResult || item.answers.D2_Keputusan_Final?.keputusan === selectedResult;
+                return contentMatch && curatorMatch && resultMatch;
+            });
+
+            renderReportTable(filteredData);
+        }
+
+        function resetFilters() {
+            filterContentName.value = '';
+            filterCuratorName.value = '';
+            filterFinalResult.value = '';
+            renderReportTable(allCurationData);
+        }
+
+        // --- Fungsi Ekspor ke Excel ---
+        function exportTableToExcel(filename = '') {
+            const dataToExport = [];
+            
+            // Buat Header yang sangat detail
+            const headers = ["Nama Konten", "Nama Kurator"];
+            curationQuestions.forEach(q => {
+                headers.push(`${q.title}_Nilai`);
+                q.items.forEach(item => headers.push(`${q.title}_${item.text}_Catatan`));
+            });
+            headers.push("D1_Kelebihan", "D1_Kekurangan", "D1_Saran", "D2_Keputusan", "D2_Deskripsi", "D2_DokumenURL", "Pesan Supervisor");
+            dataToExport.push(headers);
+
+            // Ambil data yang sedang ditampilkan (sudah difilter)
+            const visibleData = allCurationData.filter(item => {
+                 const selectedContent = filterContentName.options[filterContentName.selectedIndex].text;
+                 const selectedCurator = filterCuratorName.value;
+                 const selectedResult = filterFinalResult.value;
+                 const contentMatch = (selectedContent === 'Semua Konten') || (item.contentTitle === selectedContent);
+                 const curatorMatch = !selectedCurator || item.curatorName === selectedCurator;
+                 const resultMatch = !selectedResult || item.answers.D2_Keputusan_Final?.keputusan === selectedResult;
+                 return contentMatch && curatorMatch && resultMatch;
+            });
+
+            // Ekstrak baris data
+            visibleData.forEach(item => {
+                const answers = item.answers;
+                const row = [item.contentTitle, item.curatorName];
+                
+                curationQuestions.forEach(q => {
+                    row.push(answers[q.id]?.value || '');
+                    q.items.forEach(item_detail => {
+                        row.push(answers[q.id]?.items?.[item_detail.id]?.notes || '');
+                    });
+                });
+
+                row.push(answers.D1_Simpulan_Umum?.kelebihan || '');
+                row.push(answers.D1_Simpulan_Umum?.kekurangan || '');
+                row.push(answers.D1_Simpulan_Umum?.saran || '');
+                row.push(answers.D2_Keputusan_Final?.keputusan || '');
+                row.push(answers.D2_Keputusan_Final?.nilai_deskripsi || '');
+                row.push(answers.D2_Keputusan_Final?.photoUrl || '');
+                row.push(item.supervisorSuggestion?.message || '');
+                
+                dataToExport.push(row);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Laporan Rincian');
+            const finalFilename = filename ? `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx` : 'laporan_rincian_kurasi.xlsx';
+            XLSX.writeFile(wb, finalFilename);
+        }
+
+        // --- Inisialisasi Aplikasi ---
+        window.addEventListener('load', () => {
+            setupAndDisplayReport();
+            filterContentName.addEventListener('change', applyFilters);
+            filterCuratorName.addEventListener('change', applyFilters);
+            filterFinalResult.addEventListener('change', applyFilters);
+            resetFilterBtn.addEventListener('click', resetFilters);
+            exportReportBtn.addEventListener('click', () => exportTableToExcel('Laporan_Rincian_Kurasi'));
+        });
+    </script>
+</body>
+</html>
+
+
+
